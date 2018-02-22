@@ -8,6 +8,7 @@
 <p><b>STEP3</b>: Move pcta_expression_data.csv to 'user_data' folder in your downloaded PCTA django folder.</p>
 <p><b>STEP4</b>: run python manage.py migrate</p>
 <p><b>STEP5</b>: run python manage.py runserver localhost:8000</p>
+<p><b>STEP6</b>: run celery -A pcta_updated worker</p>
 
 <p><b>Additional STEP</b>: Install Nginx, uWSGI, and please use socket file in uWSGI folder.(Port number has to be 8000)</p>
 
