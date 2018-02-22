@@ -6,6 +6,8 @@
 <p><b>STEP2</b>: Create PCTA database on MySQL, database name should be 'pcta' and import sql file on your MySQL.
 (command mysql -uroot -p pcta < pcta.sql)</p>
 <p><b>STEP3</b>: Move pcta_expression_data.csv to 'user_data' folder in your downloaded PCTA django folder.</p>
+<p><b>STEP4</b>: Change 'your_googlegroup' to your google group name</p>
+document.getElementById('forum_embed').src = 'https://groups.google.com/forum/embed/?place=forum/your_googlegroup'
 <p><b>STEP4</b>: run python manage.py migrate</p>
 <p><b>STEP5</b>: run python manage.py runserver localhost:8000</p>
 <p><b>STEP6</b>: run celery -A pcta_updated worker</p>
