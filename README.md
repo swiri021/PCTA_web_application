@@ -1,15 +1,15 @@
 <h2>Installation</h2>
-Pre-STEP1: install Django(v1.11.4), and MySQL
-Pre-STEP2: pip install numpy scipy pandas matplotlib matplotlib_venn networkx gseapy lifelines==0.11.2 celery seaborn
+<p>Pre-STEP1: install Django(v1.11.4), and MySQL</p>
+<p>Pre-STEP2: pip install numpy scipy pandas matplotlib matplotlib_venn networkx gseapy lifelines==0.11.2 celery seaborn</p>
 
-STEP1: Please use git download, and you have to get MySQL dump file and PCTA datafile.
-STEP2: Create PCTA database on MySQL, database name should be 'pcta' and import sql file on your MySQL
-(command mysql -uroot -p pcta < pcta.sql)
-STEP3: Move pcta_expression_data.csv to 'user_data' folder in your downloaded PCTA django folder
-STEP4: run python manage.py migrate
-STEP5: run python manage.py runserver localhost:8000
+<p>STEP1: Please use git download, and you have to get MySQL dump file and PCTA datafile.</p>
+<p>STEP2: Create PCTA database on MySQL, database name should be 'pcta' and import sql file on your MySQL.
+(command mysql -uroot -p pcta < pcta.sql)</p>
+<p>STEP3: Move pcta_expression_data.csv to 'user_data' folder in your downloaded PCTA django folder.</p>
+<p>STEP4: run python manage.py migrate</p>
+<p>STEP5: run python manage.py runserver localhost:8000</p>
 
-Additional STEP: Install Nginx, uWSGI, and please use socket file in uWSGI folder.(Port number has to be 8000)
+<p>Additional STEP: Install Nginx, uWSGI, and please use socket file in uWSGI folder.(Port number has to be 8000)</p>
 
 <h2>Manual</h2>
         <h4>Type of analysis</h4>
