@@ -1,0 +1,32 @@
+{% extends 'main/main.html' %}
+{% load staticfiles %}
+
+{% block content %}
+    <div align="left" style="margin-left: 5%; margin-right: 5%; margin-bottom: 2%">
+    <h2 align="left">Download</h2>
+    </div>
+    <fieldset style="margin-left: 15%;margin-right: 20%;margin-top: 100px">
+        <legend for="filedown1"><b>File Download</b></legend>
+            <form method="POST" name="filedown1" action="{% url 'main:file_download' %}">
+                {% csrf_token %}
+                <p style="display: inline">PCTA Expression data (CSV, 337.9MB)</p>
+                <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline" value="Download"/>
+                <input type="hidden" name="file_list" value="pcta_expression_data.csv" />
+            </form>
+
+            <form method="POST" name="filedown1" action="{% url 'main:file_download' %}" style="margin-top: 10px">
+                {% csrf_token %}
+                <p style="display: inline">PCTA Metadata (CSV, 220KB)</p>
+                <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline" value="Download"/>
+                <input type="hidden" name="file_list" value="pcta_metadata.csv" />
+            </form>
+
+            <form method="POST" name="filedown1" action="{% url 'main:file_download' %}" style="margin-top: 10px">
+                {% csrf_token %}
+                <p style="display: inline">PCTA PCS category and Gleason score data (CSV, 31KB)</p>
+                <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline" value="Download"/>
+                <input type="hidden" name="file_list" value="pcta_PCS_Gleason_data.csv" />
+            </form>
+    </fieldset>
+
+{% endblock content %}

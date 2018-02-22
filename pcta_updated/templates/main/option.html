@@ -1,0 +1,12 @@
+{% extends 'main/main.html' %}
+
+{% block content %}
+    <form method="POST" id="user_option" action="{% url 'main:option' %}">
+        <fieldset style="margin-left: 15%;margin-right: 20%; margin-top: 50px">
+            <legend align="left">Sampling Option</legend>
+            {% csrf_token %}
+            {{ optionform }}
+            <input type="submit" id="submit_value" class="ui-button ui-widget ui-corner-all" style="display: block" value="Analysis start"/>
+        </fieldset>
+    </form>
+{% endblock content %}

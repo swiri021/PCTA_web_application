@@ -1,0 +1,84 @@
+{% extends 'main/main.html' %}
+{% load staticfiles %}
+
+{% block content %}
+    <h2>Biochemical Recurrence Free-Time Analysis</h2>
+
+    <form method="POST" name="filedown" action="{% url 'main:image_download' %}" style="display: inline">
+        {% csrf_token %}
+        <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline-block; margin-bottom: 20px" value="Image Download"/>
+        <input type="hidden" name="filetype" value="bcr_analysis" />
+    </form>
+
+    <form method="POST" name="filedown" action="{% url 'main:image_download' %}" style="display: inline">
+        {% csrf_token %}
+        <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline-block; margin-bottom: 20px" value="Table download"/>
+        <input type="hidden" name="filetype" value=".tsv" />
+    </form>
+
+    <br/>
+
+    <!--<div style="display: inline-block; width: 40%; height: 80%; padding-bottom: 50px">-->
+    <div style="display: block; width: 50%; min-width: 350px; height: 40%; padding-top: 10px">
+        <fieldset>
+        <legend for="GSE40272" ><b>GSE40272</b></legend>
+
+        <h4>Kaplan-Meier Plot</h4>
+        <img name="GSE40272"src="{% static result.0 %}" style="width: 100%"/>
+        <h4>Cox Proportional Hazard Regression Analysis</h4>
+        <table id="coxresult1" class="display" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Variable</th>
+                    <th>Coefficient</th>
+                    <th>Hazard Ratio(95%CI)</th>
+                    <th>P-value</th>
+                    <th>C-index</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for td1 in table_result1 %}
+                <tr>
+                    {% for d in td1 %}
+                        <td>{{ d }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </fieldset>
+    </div>
+
+    <!--<div style="display: inline-block; width: 40%; height: 80%; padding-bottom: 50px">-->
+    <div style="display: block; width: 50%; min-width: 350px; height: 40%; padding-top: 50px; padding-bottom: 50px">
+        <fieldset>
+        <legend for="GSE70769"><b>GSE70769</b></legend>
+
+        <h4>Kaplan-Meier Plot</h4>
+        <img name="GSE70769" src="{% static result.1 %}" style="width: 100%"/>
+
+        <h4>Cox Proportional Hazard Regression Analysis</h4>
+        <table id="coxresult2" class="display" cellspacing="0" width="100%" >
+            <thead>
+                <tr>
+                    <th>Variable</th>
+                    <th>Coefficient</th>
+                    <th>Hazard Ratio(95%CI)</th>
+                    <th>P-value</th>
+                    <th>C-index</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for td2 in table_result2 %}
+                <tr>
+                    {% for d in td2 %}
+                        <td>{{ d }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </fieldset>
+    </div>
+
+{% endblock content %}

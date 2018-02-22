@@ -1,0 +1,96 @@
+{% extends 'main/main.html' %}
+{% load staticfiles %}
+
+{% block content %}
+    <div align="left" style="margin-left: 5%; margin-right: 5%; margin-bottom: 5%">
+        <h2>Manual</h2>
+        <h4 style="color: #0080ff ">Type of analysis</h4>
+        <fieldset>
+        <p><b>Association analysis</b> : This analysis is composed of 3 major plots. Waterfall plot, Violin plot and Histogram. Each plots are made by PCTA dataset, and you can see expression trends of your gene or gene list.</p>
+        <p><b>Correlation analysis</b> : This analysis is composed of scatter plots and regression line. As a result, you can check correlation between 2 sets of your input through PCTA dataset. Correlation statistic is spearman rank sum.</p>
+        <p><b>Set analysis</b> : This analysis is a big category of 2 different analyses. Gene Set Enrichment Analysis and Master Regulator Analysis. You will get GSEA result of your gene set and its master regulator candidates through PCTA dataset.</p>
+        </fieldset>
+
+        <h4 style="color: #0080ff">Input</h4>
+        <fieldset>
+        <p>Entrez ID and official gene symbol in this version. Here is example :</p>
+        <img src="{% static 'images/Input_example.png' %}" style="width: 70%">
+        <p><b>Pathway input</b> : Click Pathway input button above input box, then you can see dialog box to choose pathway. Choose one of them, and Click enter button</p>
+        <p><b>Association analysis</b> : Copy and paste a gene and gene set. If input is gene set, it will be calculated to Z score.</p>
+        <p><b>Correlation analysis</b> : Copy and paste a gene and gene set in 2 different input boxes. If input is gene set, it will be calculated to Z score. Additionally, Input name can be customized</p>
+        <p><b>Set analysis</b> : Copy and paste gene set only and input name can be customized. Set analysis needs more than 10 genes for the input to increase accuracy.</p>
+        <p><b>*Supplemnet</b> : If you enter a set of genes, it will be calculated Z score(Gene set Z score) automatically not original expression values.</p>
+        <img src="{% static 'images/Input_explain.png' %}" style="width: 70%">
+        </fieldset>
+
+        <h4 style="color: #0080ff">Option</h4>
+        <fieldset>
+        <p><b>Association analysis</b> : This analysis has 4 options. Disease course, PCS, PAM50 and BCR. Disease course option will divide PCTA samples by Gleason score (GS<7, GS=7, GS>7, mCRPC). PCS is one of prostate cancer stratification system, and it will categorized samples by PCS1, PCS2 and PCS3. PAM50 is one of prostate cancer stratification system as similar as PCS, and it will divide PCTA dataset by Luminal A, Luminal B and Basal. BCR means Biochemical Recurrence Free analysis, and you can get Kaplan-Meier plot and Cox Proportional Hazard Analysis for your input. Here is example:</p>
+            <img src="{% static 'images/option_explain1.png' %}" style="width: 70%">
+        <p><b>Correlation analysis</b> : This analysis has 3 options. Disease course, PCS, PAM50 and BCR. Disease course option will divide PCTA samples by Gleason score (GS<7, GS=7, GS>7, mCRPC). PCS is one of prostate cancer stratification system, and it will categorized samples by PCS1, PCS2 and PCS3. PAM50 is one of prostate cancer stratification system as similar as PCS, and it will divide PCTA dataset by Luminal A, Luminal B and Basal.</p>
+        <p><b>Set analysis</b> : This analysis has bi-sampling option(ex. GS<7 versus Others in Disease Course). Bi-sampling option is 3 major categories, Disease course, PCS and PAM50.</p>
+        </fieldset>
+
+        <h4 style="color: #0080ff">Result and interpretation</h4>
+        <fieldset>
+            <p>You can get results of every analysis by clicking Image Download  and Table Download at the top of result screen.</p>
+            <p><b>Set analysis</b> : GSEA is represented the enrichment values of your geneset through PCTA. Master regulator analysis is using Fisher exact test and some filter option<b>(P-value < 0.01, Fold change > 0.1(Only upper case), The number of target genes of candidate > 10)</b>to decide candidates. In network, node size means the number of mapped genes, and edge thickness indicates negative Log value of p-value from Chi-square test between nodes.
+                Color degree means fold change between user-selected samples and others</p>
+            <img src="{% static 'images/graph_explain.png' %}" style="width: 70%">
+        </fieldset>
+
+        <h4 style="color: #0080ff">Examples of Protocol</h4>
+        <fieldset>
+            <div id="manual_accordion">
+                <h3>Association Analysis</h3>
+                <div>
+                    <p><b>Step1</b></p><img src="{% static 'images/as_ex1.png' %}" style="width: 70%">
+                    <p><b>Or Step1</b></p><img src="{% static 'images/as_ex2.png' %}" style="width: 60%">
+                    <p><b>Step2</b></p><img src="{% static 'images/as_ex3.png' %}" style="width: 100%">
+                    <p><b>Step3</b></p><img src="{% static 'images/as_ex4.png' %}" style="width: 70%">
+                </div>
+                <h3>Correlation Analysis</h3>
+                <div>
+                    <p><b>Step1</b></p><img src="{% static 'images/corr_ex1.png' %}" style="width: 90%">
+                    <p><b>Step2</b></p><img src="{% static 'images/corr_ex2.png' %}" style="width: 60%">
+                    <p><b>Step3</b></p><img src="{% static 'images/corr_ex3.png' %}" style="width: 90%">
+                </div>
+
+                <h3>Set Analysis</h3>
+                <div>
+                    <p><b>Step1</b></p><img src="{% static 'images/set_ex1.png' %}" style="width: 70%">
+                    <p><b>Step2</b></p><img src="{% static 'images/set_ex2.png' %}" style="width: 60%">
+                    <p><b>Step3</b></p><img src="{% static 'images/set_ex3.png' %}" style="width: 90%">
+                </div>
+            </div>
+
+
+        </fieldset>
+        <h4 style="color: #0080ff">Download raw data</h4>
+        <fieldset>
+        <p>You can download PCTA dataset and its clinical data in Download section.</p>
+        </fieldset>
+
+
+        <h4 style="color: #0080ff">Reference</h4>
+        <fieldset>
+            <h4>Main spec and library information</h4>
+            <p>Main workframe : Django (v1.11.4)</p>
+            <p>Web Server : Nginx (uWSGI Connected)</p>
+            <p>1. GSEA : gseapy for python (<a class=global_a href="http://gseapy.readthedocs.io/en/latest/">Link</a>)</p>
+            <p>2. Network plot : networkx for python (<a class=global_a href="https://networkx.github.io/">Link</a>)</p>
+            <p>3. Survival analysis : lifelines for python (<a class=global_a href="http://lifelines.readthedocs.io/en/latest/#">Link</a>)</p>
+            <p>4. Message passing library : celery (<a class=global_a href="http://www.celeryproject.org/">Link</a>)</p>
+            <p>5. ETC library : pandas, scipy, numpy, seaborn, matplotlib</p>
+            <p>6. Database : MySQL</p>
+
+            <h4>Sampling Option Reference</h4>
+            <p align="left"><b>PAM50 :</b><a class=global_a href="https://jamanetwork.com/journals/jamaoncology/article-abstract/2626510" >Associations of Luminal and Basal Subtyping of Prostate Cancer With Prognosis and Response to Androgen Deprivation Therapy.(Shuang G. Zhao et al, 2017 JAMA)</a></p>
+            <p align="left"><b>PCS :</b><a class=global_a href="http://cancerres.aacrjournals.org/content/early/2016/06/11/0008-5472.CAN-16-0902" >Integrated classification of prostate cancer reveals a novel luminal subtype with poor outcome. (Sungyong You et al, 2016 Cancer Research)</a></p>
+            <p align="left"><b>GSE40272 (BCR dataset) :</b><a class=global_a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3360134/" >Increased expression of NuSAP in recurrent prostate cancer is mediated by E2F1. (Zulfiqar G. Gulzar et al, 2013 Oncogene)</a></p>
+            <p align="left"><b>GSE70769 (BCR dataset) :</b><a class=global_a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4588396/" >Integration of copy number and transcriptomics provides risk stratification in prostate cancer: A discovery and validation cohort study. (H.Ross-Adams et al, 2015 EBioMedicine)</a></p>
+        </fieldset>
+        </fieldset>
+
+    </div>
+{% endblock content %}

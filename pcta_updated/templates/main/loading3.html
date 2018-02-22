@@ -1,0 +1,77 @@
+{% extends 'main/main.html' %}
+{% load staticfiles %}
+
+{% block content %}
+ <style>
+  .progress {
+   width:50%;
+   background:#FFFFFF;
+  }
+  .bar {
+   height:15px;
+   width:0%;
+   background:#0080ff;
+   text-align:right;
+  }
+ </style>
+
+
+<div class="status" style="margin-top: 20%">
+    <p><span id="user-count"></span></p>
+    {% if task_id %}
+        <div align="left" class="progress">
+            <div align="left" class="bar"></div>
+        </div>
+    {% endif %}
+</div>
+
+
+<script type="text/javascript">
+   var poll_xhr;
+   var willstop = 0;
+  (function(){
+    var poll = function(){
+      var json_dump = "{{ data }}";
+      var task_id = "{{task_id}}";
+      var passing_url ="{{ pass_to }}";
+
+      console.log(task_id);
+      poll_xhr = $.ajax({
+          url:'poll_state',
+          type: 'POST',
+          data: {
+              task_id: task_id,
+              csrfmiddlewaretoken: "{{csrf_token}}",
+          },
+          success: function(result) {
+              if (result.process_percent3 == null || result.process_percent3 == undefined ) {
+                  willstop = 1;
+                  document.getElementById("user-count").textContent="DONE";
+                  jQuery('.bar').css({'width': 100 + '%','font-family':'Raleway'});
+                  jQuery('.bar').html(100 + '%');
+                  if (passing_url==1){window.location.href= "{% url 'main:association_result' %}";}
+                  if (passing_url==2){window.location.href= "{% url 'main:bcr_result' %}";}
+                  if (passing_url==3){window.location.href= "{% url 'main:correlation_result' %}";}
+                  if (passing_url==4){window.location.href= "{% url 'main:set_result' %}";}
+              }
+              else {
+                  jQuery('.bar').css({'width': result.process_percent3 + '%','font-family':'Raleway'});
+                  jQuery('.bar').html(result.process_percent3 + '%');
+                  document.getElementById("user-count").textContent="Calculating..";
+              };
+          }
+      });
+    };
+
+    var refreshIntervalId = setInterval(function() {
+      poll();
+      if(willstop == 1){
+        clearInterval(refreshIntervalId);
+      }
+    },500);
+
+
+  })();
+</script>
+
+{% endblock content %}

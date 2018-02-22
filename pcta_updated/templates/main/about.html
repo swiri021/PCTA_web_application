@@ -1,0 +1,18 @@
+{% extends 'main/main.html' %}
+{% load staticfiles %}
+
+{% block content %}
+<div align="left" style="margin-left: 5%; margin-right: 5%; margin-bottom: 5%">
+        <h2>About</h2>
+        <h4 style="color: #0080ff">Overview</h4>
+        <fieldset>
+            <p>Prostate Cancer Transcriptome Atlas (PCTA) is an easy-to-use web tool, which can help researchers easily access virtually organized large transcriptome data comprised of 1,321 clinical specimens from 38 PC cohorts.
+            The PCTA includes subtype information, shown previously to be clinically relevant, that is not available from other databases, as well as Gleason grade and metastasis status. </p>
+            <p style="color: #0080ff"><b>The current version of the PCTA provides applications in 3 major analysis functionalities:</b></p>
+            <p><b style="color: #0080ff">I.</b> "Association Analysis" presents the association of a gene or gene set with PC by displaying the expression or activation score in distinct tumor subtypes or disease categories.</p>
+            <p><b style="color: #0080ff">II.</b> "Correlation Analysis" presents correlation measures and plots for association between genes and/or gene sets in the specific disease contexts. </p>
+            <p><b style="color: #0080ff">III.</b> "Gene Set Analysis" presents the results of gene set enrichment analysis, which shows enrichment scores in specific subgroups of tumors,
+                as well as a list of master regulator candidates and their potential network relationships governing the gene set.</p>
+        </fieldset>
+</div>
+{% endblock content %}

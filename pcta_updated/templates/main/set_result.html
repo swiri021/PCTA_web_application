@@ -1,0 +1,58 @@
+{% extends 'main/main.html' %}
+{% load staticfiles %}
+
+{% block content %}
+    <h2>Set Analysis</h2>
+
+    <form method="POST" name="filedown" action="{% url 'main:image_download' %}" style="display: inline">
+        {% csrf_token %}
+        <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline-block; margin-bottom: 20px" value="Image Download"/>
+        <input type="hidden" name="filetype" value=".png" />
+    </form>
+
+    <form method="POST" name="filedown" action="{% url 'main:image_download' %}" style="display: inline">
+        {% csrf_token %}
+        <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline-block; margin-bottom: 20px" value="Table download"/>
+        <input type="hidden" name="filetype" value=".csv" />
+    </form>
+
+    <div style="display: block; width: 50%; min-width: 350px; height: 40%; padding-top: 10px">
+        <fieldset>
+            <p><b>Mapped Gene Percentage Between User's List and Samples : {{ add_info }} % </b></p>
+            <legend for="gsea" ><b>Gene Set Enrichment Analysis</b></legend>
+            <img name="gsea" src="{% static result.0 %}" style="width: 100%"/>
+        </fieldset>
+    </div>
+
+    <div style="display: block; width: 50%; min-width: 350px; height: 40%; padding-top: 50px; padding-bottom: 50px">
+        <fieldset>
+        <legend for="mra" ><b>Master Regulator Analysis</b></legend>
+            <h4>Master Regulator Candidates(Top10)</h4>
+            <img name="mra" src="{% static result.1 %}" style="width: 100%"/>
+
+            <h4>Master Regulator Candidates (All)</h4>
+            <table id="mra_fet" class="display" cellspacing="0" width="100%">
+                <thead>
+                    <tr>
+                        <th>Gene(EntrezID)</th>
+                        <th>Total number of targets</th>
+                        <th>Number of Mapped Genes</th>
+                        <th>Mapped rate</th>
+                        <th>Fold Change</th>
+                        <th>P-value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for td in table_result %}
+                    <tr>
+                        {% for d in td %}
+                            <td>{{ d }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </fieldset>
+    </div>
+{% endblock content %}

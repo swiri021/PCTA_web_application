@@ -1,0 +1,80 @@
+{% extends 'main/main.html' %}
+
+{% block content %}
+    <form method="POST" id="user_input" action="{% url 'main:main_template' %}">
+        <fieldset style="margin-left: 15%;margin-right: 20%;margin-top: 50px">
+            <legend align="left" >Association analysis</legend>
+            <button id="inputopen_assoc" type="button" class="ui-button ui-widget ui-corner-all" style="display: block">Pathway Input</button>
+            {% csrf_token %}
+            {{ assoc_input }}
+            <input type="submit" name="analysis_type" id="submit_value" class="ui-button ui-widget ui-corner-all" style="display: block" value="Association analysis start"/>
+        </fieldset>
+
+        <fieldset style="margin-left: 15%;margin-right: 20%; margin-top: 50px">
+            <legend style="margin-left: 0px" >Correlation analysis</legend>
+            <button id="inputopen_corr1" type="button" class="ui-button ui-widget ui-corner-all" style="display: inline-block">Pathway Input 1</button>
+            <button id="inputopen_corr2" type="button" class="ui-button ui-widget ui-corner-all" style="display: inline-block">Pathway Input 2</button>
+            <br/>
+            {% csrf_token %}
+            {{ corr_name_input }}
+            <br/>
+            {{ corr_input }}
+            <input type="submit" name="analysis_type" id="submit_value" class="ui-button ui-widget ui-corner-all" style="display: block" value="Correlation analysis start"/>
+        </fieldset>
+
+        <fieldset style="margin-left: 15%;margin-right: 20%; margin-top: 50px;">
+            <legend align="left" >Set analysis</legend>
+            <button id="inputopen_set" type="button" class="ui-button ui-widget ui-corner-all" style="display: block">Pathway Input</button>
+            {% csrf_token %}
+            {{ set_name_input }}
+            <br/>
+            {{ set_input }}
+            <input type="submit" name="analysis_type" id="submit_value" class="ui-button ui-widget ui-corner-all" style="display: block" value="Set analysis start"/>
+            <p style="font-size: 12px">In this version, This section will not show loading page for results because of technical issue.</p>
+            <p style="font-size: 12px"><b>Please wait 30~45 seconds for loading.</b></p>
+        </fieldset>
+    <br/>
+    <br/>
+    </form>
+
+    <div id="dialog_assoc" title="Association Analysis Input">
+        <form method="POST" action="{% url 'main:pathway_input' %}">
+            <p>Select 1 pathway to analyze through PCTA dataset</p>
+            {% csrf_token %}
+            {{ pathway_input }}
+            <input type="submit" name="analysis_type" id="submit_value" class="ui-button ui-widget ui-corner-all" style="display: block" value="Enter"/>
+            <input type="hidden" id="input_type" name="input_type" value="assoc">
+        </form>
+    </div>
+
+    <div id="dialog_corr1" title="Correlation Analysis Input">
+        <form method="POST" action="{% url 'main:pathway_input' %}">
+            <p>Select 1 pathway to analyze through PCTA dataset</p>
+            {% csrf_token %}
+            {{ pathway_input }}
+            <input type="submit" name="analysis_type" id="submit_value" class="ui-button ui-widget ui-corner-all" style="display: block" value="Enter"/>
+            <input type="hidden" id="input_type" name="input_type" value="corr1">
+        </form>
+    </div>
+
+    <div id="dialog_corr2" title="Correlation Analysis Input">
+        <form method="POST" action="{% url 'main:pathway_input' %}">
+            <p>Select 1 pathway to analyze through PCTA dataset</p>
+            {% csrf_token %}
+            {{ pathway_input }}
+            <input type="submit" name="analysis_type" id="submit_value" class="ui-button ui-widget ui-corner-all" style="display: block" value="Enter"/>
+            <input type="hidden" id="input_type" name="input_type" value="corr2">
+        </form>
+    </div>
+
+    <div id="dialog_set" title="Set Analysis Input">
+        <form method="POST" action="{% url 'main:pathway_input' %}">
+            <p>Select 1 pathway to analyze through PCTA dataset</p>
+            {% csrf_token %}
+            {{ pathway_input }}
+            <input type="submit" name="analysis_type" id="submit_value" class="ui-button ui-widget ui-corner-all" style="display: block" value="Enter"/>
+            <input type="hidden" id="input_type" name="input_type" value="set">
+        </form>
+    </div>
+
+{% endblock content %}
