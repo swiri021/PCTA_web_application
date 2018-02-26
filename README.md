@@ -1,4 +1,5 @@
 <h2>Installation</h2>
+<p><b>Library and Django Version is super important !</b></p>
 <p><b>Pre-STEP1</b>: install Django(v1.11.4), and MySQL</p>
 <p><b>Pre-STEP2</b>: pip install numpy scipy pandas matplotlib matplotlib_venn networkx gseapy lifelines==0.11.2 celery seaborn</p>
 
