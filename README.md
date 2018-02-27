@@ -3,7 +3,8 @@
 <p><b>Pre-STEP1</b>: install Django(v1.11.4), and MySQL</p>
 <p><b>Pre-STEP2</b>: pip install numpy scipy pandas matplotlib matplotlib_venn networkx gseapy lifelines==0.11.2 celery seaborn</p>
 
-<p><b>STEP1</b>: Please use git download for web application, and for database, you have to get MySQL dump file and PCTA datafile from Admin.</p>
+<p><b>STEP1</b>: Please use git download for web application, and for database, you have to get MySQL dump file and PCTA datafile from the official sites</p>
+Link : http://www.thepcta.org
 <p><b>STEP2</b>: Create PCTA database on MySQL, database name should be 'pcta' and import sql file on your MySQL.
 (command mysql -uroot -p pcta < pcta.sql)</p>
 <p><b>STEP3</b>: Move pcta_expression_data.csv to 'user_data' folder in your downloaded PCTA django folder.</p>
