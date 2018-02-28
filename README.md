@@ -14,7 +14,7 @@ Link : http://www.thepcta.org
 <p><b>STEP6</b>: run python manage.py runserver localhost:8000</p>
 <p><b>STEP7</b>: run celery -A pcta_updated worker</p>
 
-<p><b>Additional STEP</b>: Install Nginx, uWSGI, and please use socket file in uWSGI folder.(Port number has to be 8000)</p>
+<p><b>Additional STEP</b>: Install Nginx, uWSGI, and please use socket file in uWSGI folder to link uWSGI and Nginx.</p>
 
 <h2>Manual</h2>
         <h4>Type of analysis</h4>
