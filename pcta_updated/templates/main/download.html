@@ -2,9 +2,10 @@
 {% load staticfiles %}
 
 {% block content %}
-    <div align="left" style="margin-left: 5%; margin-right: 5%; margin-bottom: 2%">
+    <div align="left" style="margin-left: 5%; margin-right: 5%; margin-bottom: 5%">
     <h2 align="left">Download</h2>
     </div>
+
     <fieldset style="margin-left: 15%;margin-right: 20%;margin-top: 100px">
         <legend for="filedown1"><b>File Download</b></legend>
             <form method="POST" name="filedown1" action="{% url 'main:file_download' %}">

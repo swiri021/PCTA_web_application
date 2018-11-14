@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="yoonj1@10.220.249.117:22" autoUploadExternalChanges="true">
+    <serverData>
+      <paths name="ssh://ubuntu@ec2-35-166-100-94.us-west-2.compute.amazonaws.com:22/usr/bin/python">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/ubuntu/django_proj/pcta_updated" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="yoonj1@10.220.249.117:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/django_proj/pcta_updated" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>

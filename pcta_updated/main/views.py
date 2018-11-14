@@ -27,9 +27,7 @@ from lifelines import CoxPHFitter
 from lifelines.utils import concordance_index
 
 from multiprocessing import Process, Queue
-from pcta_updated import all_expr_df, pcta_id, mra_set, plot_fixed_path, nginx_plot_fixed_path
-from wand.image import Image
-from wand.color import Color
+from pcta_updated import all_expr_df, pcta_id, mra_set
 
 import json
 import os
@@ -143,7 +141,7 @@ def main_template(request):
 
 			input_g = input_process(assoc_dat)
 
-			if len(input_g)>1000:
+			if len(input_g)>3000:
 				msg = "Too many genes, Try it less than 1000 Genes"
 				return render(request,'main/error.html',{'msg':msg})
 
@@ -158,15 +156,15 @@ def main_template(request):
 			input_g1 = input_process(corr_dat1)
 			input_g2 = input_process(corr_dat2)
 
-			if len(input_g1)>1000 and len(input_g2)>1000:
+			if len(input_g1)>3000 and len(input_g2)>3000:
 				msg = "Too many genes, Try it less than 1000 Genes at both boxes"
 				return render(request,'main/error.html',{'msg':msg})
 
-			elif len(input_g1)>1000:
+			elif len(input_g1)>3000:
 				msg = "Too many genes, Try it less than 1000 Genes at first box"
 				return render(request,'main/error.html',{'msg':msg})
 
-			elif len(input_g2)>1000:
+			elif len(input_g2)>3000:
 				msg = "Too many genes, Try it less than 1000 Genes at second box"
 				return render(request,'main/error.html',{'msg':msg})
 
@@ -205,7 +203,7 @@ def main_template(request):
 		elif request.POST['analysis_type']=='Set analysis start':
 			input_g = input_process(set_dat)
 
-			if len(input_g)>1000:
+			if len(input_g)>3000:
 				msg = "Too many genes, Try it less than 1000 Genes"
 				return render(request,'main/error.html',{'msg':msg})
 
@@ -432,7 +430,7 @@ def call_calculation(request):
 			"""
 
 def association_result(request):
-	plot_path= plot_fixed_path+request.session.session_key+"/"
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+request.session.session_key+"/"
 	template_plot_path = "images/"+request.session.session_key+"/"
 	test_name = "association_test"
 
@@ -443,7 +441,7 @@ def bcr_result(request):
 	#result = request.session['bcr_result_list']
 	#table_result = request.session['bcr_table_list']
 
-	plot_path= plot_fixed_path+request.session.session_key+"/"
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+request.session.session_key+"/"
 	template_plot_path = "images/"+request.session.session_key+"/"
 	test_name = "bcr_analysis"
 
@@ -471,7 +469,7 @@ def bcr_result(request):
 def correlation_result(request):
 	#result = request.session['corr_result_list']
 
-	plot_path=plot_fixed_path+request.session.session_key+"/"
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+request.session.session_key+"/"
 	template_plot_path = "images/"+request.session.session_key+"/"
 	test_name = "correlation_test"
 	result = [template_plot_path+test_name+"0.png",template_plot_path+test_name+"1.png",template_plot_path+test_name+"2.png"]
@@ -510,7 +508,7 @@ def zip_f(src, dst, fmat):
 
 def image_download(request):
 
-	plot_path= plot_fixed_path+request.session.session_key+"/"
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+request.session.session_key+"/"
 	if request.method == 'POST':
 		filename = request.POST['filetype']
 		print filename
@@ -534,6 +532,7 @@ def file_download(request):
 			with open(file_path, 'rb') as fh:
 				response = HttpResponse(fh.read(), content_type='text/csv')
 				response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_path)
+				#response['Content-Disposition'] = 'attachment; filename="file1.csv"'
 				return response
 
 			raise Http404
@@ -609,7 +608,33 @@ def grouping_samples(input_option):
 	sample_list = [map(str,list(grade_orm.values('sample_id').values_list('sample_id', flat=True))) for grade_orm in group_samples]
 
 	return sample_list, m_grad
+"""
+def gene_set_zscore( arr1, gene_set=[] ,sample_status="multiple"):
 
+	def cal_z(temp_df, inter):
+		selected = temp_df.loc[inter].tolist()
+		selected_adj = [float(x) for x in selected]
+		total = temp_df.tolist()
+		total_adj = [float(x) for x in total]
+
+		diff_mean = np.nanmean(selected_adj) - np.nanmean(total_adj)
+		result = diff_mean*np.sqrt(len(selected_adj))/np.nanstd(total_adj, ddof=1)
+		return result
+
+	ft_dat_index = gene_set
+	zscore=[]
+
+	arr1_index = arr1.index.tolist()
+	inter = list(set(arr1_index).intersection(ft_dat_index))
+
+	if sample_status=="single":
+		zscore = [cal_z(arr1, inter)]
+
+	elif sample_status=="multiple":
+		zscore = [cal_z(arr1[x], inter) for x in arr1.columns.tolist()]
+
+	return zscore
+"""
 def gene_set_zscore(df_sample, gene_set=[] ,sample_status="multiple"):
 
 	def array_divide(piv, arr):
@@ -677,6 +702,229 @@ def gene_set_zscore(df_sample, gene_set=[] ,sample_status="multiple"):
 
 	return zscore
 
+def association_calculator(input_data, group_info, group_samples, session_key):
+
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+session_key+"/"
+	template_plot_path = "images/"+session_key+"/"
+	test_name = "association_test"
+
+	if not os.path.exists(plot_path):
+		os.mkdir(plot_path)
+	else:
+		files = glob.glob(plot_path+"*")
+		print files
+		for f in files:
+			os.remove(f)
+
+	filecount = 0
+	file_list = []
+
+	#####Lollipop
+	pt=MY_PLOT()
+	df = all_expr_df
+	df = df.drop('Symbol',axis=1)
+
+	if len(input_data)>1:
+		df_data = [gene_set_zscore(df[samples], input_data, sample_status="multiple") for samples in group_samples]
+		ylab = 'Z score'
+	elif len(input_data)==1:
+		df_data = [df[samples].loc[input_data[0]].values.tolist() for samples in group_samples]
+		ylab = 'Expression'
+
+	pt.lollipop([sorted(d) for d in df_data], ylab=ylab, label_data=group_info, filename=plot_path+test_name+str(filecount))
+	file_list.append(template_plot_path+test_name+str(filecount)+".png")
+	filecount += 1
+	#####Lollipop
+
+	#####Violin
+	df_data_arr = [ pd.DataFrame(data=d) for d in df_data]
+	df_data_arr = pd.concat(df_data_arr, axis=1)
+	df_data_arr.columns = group_info
+
+	pt.violin_plt(df_data_arr,ylab=ylab,tit='',filename=plot_path+test_name+str(filecount))
+	file_list.append(template_plot_path+test_name+str(filecount)+".png")
+	filecount += 1
+	#####Violin
+
+	#####Histogram
+	pt.histogram_group(df_data_arr,legend=True,filename=plot_path+test_name+str(filecount))
+	file_list.append(template_plot_path+test_name+str(filecount)+".png")
+	filecount += 1
+	#####Histogram
+
+	return file_list
+
+def survival_calculator(input_data, session_key):
+
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+session_key+"/"
+
+	template_plot_path = "images/"+session_key+"/"
+	test_name = "bcr_analysis"
+
+	if not os.path.exists(plot_path):
+		os.mkdir(plot_path)
+	else:
+		files = glob.glob(plot_path+"*")
+		for f in files:
+			os.remove(f)
+
+	filecount = 0
+	file_list = []
+
+	pt=MY_PLOT()
+
+	surv_dataset = ['GSE40272', 'GSE70769']
+
+	def table_split(cph):
+		cph_d = cph.summary
+		cph_d_index = cph_d.index.tolist()
+
+		if len(cph_d_index)>1:
+			t_arr = []
+			for x in cph_d_index:
+				testing = x
+				coef = format(cph_d['coef'].loc[x],".2f")
+				haz_c = format(cph_d['exp(coef)'].loc[x],".2f")
+				haz_c_int = str(format(np.exp(cph_d['lower 0.95'].loc[x]),".2f"))+"-"+str(format(np.exp(cph_d['upper 0.95'].loc[x]),".2f"))
+				pval = format(cph_d['p'].loc[x],".3f")
+				concor = format(concordance_index(cph.durations, -cph.predict_partial_hazard(cph.data).values.ravel(), cph.event_observed),".2f")
+
+				t_arr.append([testing+"(Multivariate)", coef, haz_c+"("+haz_c_int+")", pval, concor])
+
+			return t_arr
+		else:
+			for x in cph_d_index:
+				testing = x
+				coef = format(cph_d['coef'].loc[x],".2f")
+				haz_c = format(cph_d['exp(coef)'].loc[x],".2f")
+				haz_c_int = str(format(np.exp(cph_d['lower 0.95'].loc[x]),".2f"))+"-"+str(format(np.exp(cph_d['upper 0.95'].loc[x]),".2f"))
+				pval = format(cph_d['p'].loc[x],".3f")
+				concor = format(concordance_index(cph.durations, -cph.predict_partial_hazard(cph.data).values.ravel(), cph.event_observed),".2f")
+
+			return [[testing, coef, haz_c+"("+haz_c_int+")", pval, concor]]
+
+	expr_set_arr = []
+	clinical_set_arr = []
+
+	for surv in  surv_dataset:
+		expr_set = pd.read_csv('user_data/clinical_data/'+surv+'.csv',index_col=0)
+		expr_set.index = expr_set.index.astype(int)
+		expr_set.index = expr_set.index.astype(str)
+		clinical_set = pd.read_excel('user_data/clinical_data/'+surv+'_clinical.xlsx',index_col=0)
+
+		expr_set_arr.append(expr_set)
+		clinical_set_arr.append(clinical_set)
+
+	test_set_arr = []
+	for expr in expr_set_arr:
+		if len(input_data)>1:
+			df_data = gene_set_zscore(expr, input_data, sample_status="multiple")
+			test_set = pd.Series(data=df_data, index=expr.columns.tolist(), name='Input_Zscore')
+			test_set_arr.append(test_set)
+			surv_input = 'Input_Zscore'
+		elif len(input_data)==1:
+			test_set = expr.loc[input_data[0]]
+			test_set_arr.append(test_set)
+			surv_input = input_data[0]
+
+	dv_arr = []
+	for i, test in enumerate(test_set_arr):
+		test_set_up = test[test > test.median()]
+		test_set_down = test[test < test.median()]
+		clinical_up = clinical_set_arr[i].loc[test_set_up.index.tolist()]
+		clinical_down = clinical_set_arr[i].loc[test_set_down.index.tolist()]
+		clinical_arr = [clinical_up, clinical_down]
+
+		dv_arr.append(clinical_arr)
+
+	for dv in dv_arr:
+		pt.survival_plot_and_cox(dv, label=[surv_input+'_up', surv_input+'_down'], filename=plot_path+test_name+str(filecount))
+		file_list.append(template_plot_path+test_name+str(filecount)+".png")
+		filecount+=1
+
+	table_arr = []
+	cph = CoxPHFitter()
+	for i, test in enumerate(test_set_arr):
+		cph_data = test
+		cph_data.loc[cph_data>test_set.median()]=1
+		cph_data.loc[cph_data<test_set.median()]=0
+		cph_data = pd.concat([cph_data, clinical_set_arr[i]], axis=1)
+
+		table_data = []
+		cph.fit(cph_data[[surv_input,'bcrstatus','bcrmonth']].dropna(), 'bcrmonth', event_col='bcrstatus')
+		table_data = table_split(cph)
+
+		cph.fit(cph_data[['gleason','bcrstatus','bcrmonth']].dropna(), 'bcrmonth', event_col='bcrstatus')
+		table_data = table_data+table_split(cph)
+
+		cph.fit(cph_data[[surv_input,'gleason','bcrstatus','bcrmonth']].dropna(), 'bcrmonth', event_col='bcrstatus')
+		table_data = table_data+table_split(cph)
+
+		#table_data = [['Variable','Coefficient','Hazard Ratio','P-value','C-index']]+table_data
+
+		table_arr.append(table_data)
+		rw = open(plot_path+surv_dataset[i]+'.cox.tsv',"w")
+		rw.write("Variable\tCoefficient\tHR(95%Conf)\tP-value\tC-index\n")
+
+		for x in table_data:
+			rw.write('\t'.join(x)+'\n')
+		rw.close()
+
+	return file_list, table_arr
+
+def correlation_calculator(input_data1,input_data2, group_info, group_samples, session_key):
+
+	####ALL SAMPLES INSERTION####
+	group_info = ['ALL']+group_info
+	all_samples = [sample for samples in group_samples for sample in samples]
+	group_samples.insert(0, all_samples)
+	####ALL SAMPLES INSERTION####
+
+	def input_data_process(df,input_d):
+		if len(input_d)>1:
+			df_data = [gene_set_zscore(df[samples], input_d, sample_status="multiple") for samples in group_samples]
+		elif len(input_d)==1:
+			df_data = [df[samples].loc[input_d[0]].values.tolist() for samples in group_samples]
+		return df_data
+
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+session_key+"/"
+	nginx_plot_path= "/home/ubuntu/django_proj/pcta_updated/main/staticimages/"+session_key+"/"
+
+	template_plot_path = "images/"+session_key+"/"
+	test_name = "correlation_test"
+
+	if not os.path.exists(plot_path):
+		os.mkdir(plot_path)
+		os.mkdir(nginx_plot_path)
+	else:
+		files = glob.glob(plot_path+"*")
+		for f in files:
+			os.remove(f)
+
+	filecount = 0
+	file_list = []
+
+	#####Scatter
+	pt=MY_PLOT()
+	df = all_expr_df
+	df = df.drop('Symbol',axis=1)
+
+	df_data1 = input_data_process(df, input_data1)
+	df_data2 = input_data_process(df, input_data2)
+	group_df = []
+
+	for a in range(len(group_info)):
+		d = {'Input1':df_data1[a], 'Input2':df_data2[a]}
+		group_df.append(pd.DataFrame(data=d))
+
+	pt.shared_scatter(group_df, x_dat='Input1',y_dat='Input2', title=group_info, filename=plot_path+test_name+str(filecount))
+	file_list.append(template_plot_path+test_name+str(filecount)+".png")
+	filecount += 1
+
+	os.system("cp %s/* %s"%(plot_path,nginx_plot_path))
+
+	return file_list
+
 def set_calculator(input_data, group_info, group_samples, session_key, set_name='USER_GENE_SET'):
 
 	def fet_f(a1,b1,total_gene_assum):
@@ -687,8 +935,8 @@ def set_calculator(input_data, group_info, group_samples, session_key, set_name=
 		oddsratio, pvalue = stats.fisher_exact([[len(a1_inter_b1), len(b1_unique_froma1)], [len(a1_unique_fromb1), total_gene_assum-(len(a1_inter_b1)+len(b1_unique_froma1)+len(a1_unique_fromb1))]])
 		return len(a1),len(a1_inter_b1),pvalue
 
-	plot_path= plot_fixed_path+session_key+"/"
-	nginx_plot_path= nginx_plot_fixed_path+session_key+"/"
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+session_key+"/"
+	nginx_plot_path= "/home/ubuntu/django_proj/pcta_updated/main/staticimages/"+session_key+"/"
 
 	template_plot_path = "images/"+session_key+"/"
 	test_name = "USER_SET"
@@ -734,7 +982,7 @@ def set_calculator(input_data, group_info, group_samples, session_key, set_name=
 	df_user_s.columns = range(len(df_user_s.columns.tolist()))
 	df_user_s = df_user_s.reset_index()
 
-	gseapy.gsea(data=df_user_s, gene_sets=fixed_path_gmt, cls=class_vector, outdir=plot_path, min_size=2, max_size=1000, weighted_score_type=1, permutation_type = 'gene_set', method='signal_to_noise', ascending=False,figsize=(6.5,6), format='png')
+	gseapy.gsea(data=df_user_s, gene_sets=fixed_path_gmt, cls=class_vector, outdir=plot_path, min_size=2, max_size=1000, weighted_score_type=1, permutation_type = 'phenotype', method='signal_to_noise', ascending=False,figsize=(6.5,6), format='png', processes=6)
 
 	#with Image(filename=plot_path+set_name+".gsea.pdf", resolution=300) as img:
 	#	with Image(width=img.width, height=img.height, background=Color("white")) as bg:

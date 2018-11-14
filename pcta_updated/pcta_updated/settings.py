@@ -94,7 +94,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'pcta',
         'USER': 'root',
-        'PASSWORD': 'defianc',
+        #'PASSWORD': 'defianc',
         'HOST': 'localhost',   # Or an IP Address that your DB is hosted on
         'PORT': '3306',
     }
@@ -138,8 +138,5 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 #MEDIA_ROOT = '/home/ubuntu/django_proj/pcta_updated/media/'
-STATICFILES_DIR = '/home/ubuntu/django_proj/pcta_updated/main/static/'
-STATIC_ROOT = '/home/ubuntu/django_proj/pcta_updated/main/static/'
-
 MEDIA_ROOT  = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'

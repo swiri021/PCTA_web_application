@@ -2,7 +2,7 @@
 {% load staticfiles %}
 
 {% block content %}
-    <h2>Biochemical Recurrence Free-Time Analysis</h2>
+    <h1>Biochemical Recurrence Free-Time Analysis</h1>
 
     <form method="POST" name="filedown" action="{% url 'main:image_download' %}" style="display: inline">
         {% csrf_token %}

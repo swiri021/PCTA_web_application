@@ -1,0 +1,5 @@
+Variable	Coefficient	HR(95%Conf)	P-value	C-index
+9480	0.49	1.63(0.90-2.95)	0.107	0.56
+gleason	0.86	2.36(1.74-3.20)	0.000	0.70
+9480(Multivariate)	-0.02	0.98(0.53-1.81)	0.947	0.69
+gleason(Multivariate)	0.86	2.37(1.73-3.25)	0.000	0.69

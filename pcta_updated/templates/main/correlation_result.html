@@ -2,7 +2,7 @@
 {% load staticfiles %}
 
 {% block content %}
-    <h2>Correlation Analysis</h2>
+    <h1>Correlation Analysis</h1>
 
     <form method="POST" name="filedown" action="{% url 'main:image_download' %}">
         {% csrf_token %}

@@ -2,12 +2,12 @@
 {% load staticfiles %}
 
 {% block content %}
-    <h2>Set Analysis</h2>
+    <h1>Set Analysis</h1>
 
     <form method="POST" name="filedown" action="{% url 'main:image_download' %}" style="display: inline">
         {% csrf_token %}
         <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline-block; margin-bottom: 20px" value="Image Download"/>
-        <input type="hidden" name="filetype" value=".png" />
+        <input type="hidden" name="filetype" value=".pdf" />
     </form>
 
     <form method="POST" name="filedown" action="{% url 'main:image_download' %}" style="display: inline">

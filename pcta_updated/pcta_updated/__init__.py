@@ -14,5 +14,3 @@ mra_set = mra_set.loc[mra_cad]
 pcta_id = pd.read_csv('user_data/pcta_id_mapping.csv',index_col=0)
 pcta_id.index = pcta_id.index.astype(str)
 
-plot_fixed_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"
-nginx_plot_fixed_path = "/home/ubuntu/django_proj/pcta_updated/main/staticimages/"

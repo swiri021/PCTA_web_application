@@ -2,7 +2,7 @@
 {% load staticfiles %}
 
 {% block content %}
-    <h2>Association Analysis</h2>
+    <h1>Association Analysis</h1>
 
     <form method="POST" name="filedown" action="{% url 'main:image_download' %}">
         {% csrf_token %}
@@ -24,7 +24,7 @@
         </fieldset>
     </div>
 
-    <div style="display: inline-block; width: 40%; height: 50%; margin-bottom: 50px">
+    <div style="display: inline-block; width: 40%; height: 50%; margin-bottom: 10px">
         <fieldset>
         <legend for="histo"><b>Histogram Plot</b></legend>
         <img name="histo" src="{% static result.2 %}" style="width: 100%"/>

@@ -10,7 +10,7 @@ from lifelines import CoxPHFitter
 from lifelines.utils import concordance_index
 
 from multiprocessing import Process, Queue
-from pcta_updated import all_expr_df, pcta_id, mra_set, plot_fixed_path, nginx_plot_fixed_path
+from pcta_updated import all_expr_df, pcta_id, mra_set
 
 import json
 import os
@@ -81,8 +81,8 @@ def table_split(cph):
 def association_c(input_data, group_info, group_samples, plot_color, session_key):
 	current_task.update_state(state='PROGRESS', meta={'process_percent': 0})
 
-	plot_path= plot_fixed_path+session_key+"/"
-	nginx_plot_path= nginx_plot_fixed_path+session_key+"/"
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+session_key+"/"
+	nginx_plot_path= "/home/ubuntu/django_proj/pcta_updated/main/staticimages/"+session_key+"/"
 
 	template_plot_path = "images/"+session_key+"/"
 	test_name = "association_test"
@@ -149,8 +149,8 @@ def association_c(input_data, group_info, group_samples, plot_color, session_key
 @shared_task
 def survival_c(input_data, session_key):
 	current_task.update_state(state='PROGRESS', meta={'process_percent1': 0})
-	plot_path= plot_fixed_path+session_key+"/"
-	nginx_plot_path= nginx_plot_fixed_path+session_key+"/"
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+session_key+"/"
+	nginx_plot_path= "/home/ubuntu/django_proj/pcta_updated/main/staticimages/"+session_key+"/"
 
 	template_plot_path = "images/"+session_key+"/"
 	test_name = "bcr_analysis"
@@ -276,8 +276,8 @@ def correlation_c(input_data1,input_data2, group_info, group_samples, plot_color
 		return df_data
 
 	current_task.update_state(state='PROGRESS', meta={'process_percent2': 20})
-	plot_path= plot_fixed_path+session_key+"/"
-	nginx_plot_path= nginx_plot_fixed_path+session_key+"/"
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+session_key+"/"
+	nginx_plot_path= "/home/ubuntu/django_proj/pcta_updated/main/staticimages/"+session_key+"/"
 
 	template_plot_path = "images/"+session_key+"/"
 	test_name = "correlation_test"
@@ -319,4 +319,98 @@ def correlation_c(input_data1,input_data2, group_info, group_samples, plot_color
 	os.system("cp -rf %s/* %s"%(plot_path,nginx_plot_path))
 	current_task.update_state(state='PROGRESS', meta={'process_percent2': 100})
 
+	return random.random()
+
+@shared_task
+def set_c(input_data, group_info, group_samples, session_key):
+
+	def fet_f(a1,b1,total_gene_assum):
+		a1_inter_b1 = list(set(a1).intersection(b1))
+		a1_unique_fromb1 = list(set(a1)-set(a1_inter_b1))
+		b1_unique_froma1 = list(set(b1)-set(a1_inter_b1))
+
+		oddsratio, pvalue = stats.fisher_exact([[len(a1_inter_b1), len(b1_unique_froma1)], [len(a1_unique_fromb1), total_gene_assum-(len(a1_inter_b1)+len(b1_unique_froma1)+len(a1_unique_fromb1))]])
+		return len(a1),len(a1_inter_b1),pvalue
+
+	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+session_key+"/"
+	template_plot_path = "images/"+session_key+"/"
+	test_name = "USER_SET"
+
+	if not os.path.exists(plot_path):
+		os.mkdir(plot_path)
+	else:
+		files = glob.glob(plot_path+"*")
+		for f in files:
+			os.remove(f)
+
+	filecount = 0
+	file_list = []
+
+	pt=MY_PLOT()
+	df_all = all_expr_df
+
+	#############GSEA#############
+	gmt_temp = 'USER_SET\tNA\t'+'\t'.join(input_data)
+	#fixed_path_gmt = 'user_data/'+userID+'/user.gmt'
+	fixed_path_gmt = plot_path+'user.gmt'
+	rw = open(fixed_path_gmt,'w')
+	rw.write(gmt_temp)
+	rw.close()
+
+	sample_list = group_samples
+	class_vector = [[group_info[i]]*len(item) for i,item in enumerate(sample_list)]
+	class_vector = [y for x in class_vector for y in x]
+	class_vector = map(str,class_vector)
+
+	current_task.update_state(state='PROGRESS', meta={'process_percent3': 20})
+
+	df_user_s = [df_all[s] for s in sample_list]
+	df_user_s = pd.concat(df_user_s,axis=1)
+
+	df_user_s.columns = range(len(df_user_s.columns.tolist()))
+	df_user_s = df_user_s.reset_index()
+
+	gseapy.gsea(data=df_user_s, gene_sets=fixed_path_gmt, cls=class_vector, outdir=plot_path, min_size=2, max_size=1000, weighted_score_type=1, permutation_type = 'gene_set', method='signal_to_noise', ascending=False,figsize=(6.5,6), format='png')
+
+	file_list.append(template_plot_path+"USER_SET.gsea.png")
+	filecount += 1
+	#############GSEA#############
+	current_task.update_state(state='PROGRESS', meta={'process_percent3': 40})
+	#############MRA#############
+	mra_set_t = mra_set.T
+	mra_list = list(set(mra_set.index.tolist()))
+	mra_targets = [mra_set_t[x].values.tolist() for x in mra_list]
+	mra_targets = [map(str,x[0]) if type(x[0])==list else [str(x[0])] for x in mra_targets]
+
+	total_genes = len(list(set(mra_set.values.flatten())))
+
+	pvals = [fet_f(mra_targets[a], input_data, total_genes) for a in range(len(mra_list))]
+	pvals_list = [[mra_list[i],item[0],item[1],item[2]]for i,item in enumerate(pvals) if item[2] < 0.01 and item[0]>10]
+	table_arr = pvals_list #####Table data
+
+	current_task.update_state(state='PROGRESS', meta={'process_percent3': 60})
+
+	rw = open(plot_path+'mra_candidates.tsv',"w")
+	rw.write("Gene(EntrezID)\tTF_targets\tMapped_genes\tP-value\n")
+	for x in table_arr:
+		x = [str(y) for y in x]
+		rw.write('\t'.join(x)+'\n')
+	rw.close()
+
+	network_data = pd.DataFrame(data=pvals_list, columns=['TF', 'targets','mapped','pval'])
+	network_data = network_data.set_index('TF')
+	network_data['prob_mapped'] = network_data['mapped']/network_data['targets']
+	network_data = network_data.sort_values('prob_mapped',ascending=False)
+	network_data = network_data.loc[network_data.index.tolist()[:10]]
+
+	current_task.update_state(state='PROGRESS', meta={'process_percent': 80})
+
+	selected_network_expr = df_all[group_samples[0]].loc[network_data.index.tolist()[:10]]
+
+	pt.network_plot(network_data, selected_network_expr, tit=group_info[0],filename=plot_path+test_name+str(filecount))
+	file_list.append(template_plot_path+test_name+str(filecount)+".png")
+
+	current_task.update_state(state='PROGRESS', meta={'process_percent3': 100})
+
+	#############MRA#############
 	return random.random()
