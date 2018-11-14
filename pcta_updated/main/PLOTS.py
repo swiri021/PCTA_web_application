@@ -47,9 +47,10 @@ class MY_PLOT:
 
 		#fig.set_size_inches(2,3)
 		#fig.set_size_inches(4,5)
-		ax = sns.violinplot(data=df,color=".8")
+		#ax = sns.violinplot(data=df,color=".8")
+		ax = sns.boxplot(data=df,color=".8")
 
-		sns.stripplot(data=df, palette=color_arr, jitter=True,alpha=.5, ax=ax)
+		sns.stripplot(data=df, palette=color_arr, jitter=True, size=3, alpha=.5, ax=ax)
 		#ax = sns.violinplot(data=df,palette="hls")
 		#sns.swarmplot(data=df, palette="hls", ax=ax)
 		ax.set_xlabel(xlab)
@@ -341,15 +342,14 @@ class MY_PLOT:
 
 	def lollipop(self, dat, label_data=[],color_arr=[] ,ylab='',tit='', filename=''):
 		plt.clf()
-		plt.figure(figsize=(8,3))
-		print ylab
+		plt.figure(figsize=(10,5))
 		color=color_arr
 		counter = 0
 		for i, item in enumerate(dat):
 			markerline, stemlines, baseline = plt.stem(range(counter,counter+len(item)), item, color[i], markerfmt=' ',label=label_data[i])
 			#plt.setp(stemlines, 'color', plt.getp(markerline,'color'))
 			#plt.setp(stemlines, 'linestyle', 'dotted')
-			plt.setp(baseline, 'color', color[i], 'linewidth', 2)
+			plt.setp(baseline, 'color', color[i], 'linewidth', 0.5)
 
 			counter = counter+len(item)
 

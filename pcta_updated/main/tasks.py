@@ -20,6 +20,7 @@ import os.path
 from numpy import random
 from time import sleep
 from celery import Celery
+import itertools
 
 
 def gene_set_zscore_single_thr( arr1, gene_set=[] ,sample_status="multiple"):
@@ -54,7 +55,9 @@ def table_split(cph):
 
 		if len(cph_d_index)>1:
 			t_arr = []
+
 			for x in cph_d_index:
+
 				testing = x
 				coef = format(cph_d['coef'].loc[x],".2f")
 				haz_c = format(cph_d['exp(coef)'].loc[x],".2f")
@@ -62,7 +65,7 @@ def table_split(cph):
 				pval = format(cph_d['p'].loc[x],".3f")
 				concor = format(concordance_index(cph.durations, -cph.predict_partial_hazard(cph.data).values.ravel(), cph.event_observed),".2f")
 
-				t_arr.append([testing+"(Multivariate)", coef, haz_c+"("+haz_c_int+")", pval, concor])
+				t_arr.append(["Multivariate",testing, coef, haz_c+"("+haz_c_int+")", pval, concor])
 
 			return t_arr
 		else:
@@ -74,7 +77,7 @@ def table_split(cph):
 				pval = format(cph_d['p'].loc[x],".3f")
 				concor = format(concordance_index(cph.durations, -cph.predict_partial_hazard(cph.data).values.ravel(), cph.event_observed),".2f")
 
-			return [[testing, coef, haz_c+"("+haz_c_int+")", pval, concor]]
+			return [["Univariate", testing, coef, haz_c+"("+haz_c_int+")", pval, concor]]
 
 
 @shared_task
@@ -117,20 +120,43 @@ def association_c(input_data, group_info, group_samples, plot_color, session_key
 	current_task.update_state(state='PROGRESS', meta={'process_percent': 20})
 
 	pt.lollipop([sorted(d) for d in df_data], label_data=group_info, ylab=ylab, color_arr=plot_color,filename=plot_path+test_name+str(filecount))
+
+	###########Oneway ANNOVA with group data
+	if len(df_data)==3:
+		fv,pv = stats.f_oneway(df_data[0],df_data[1], df_data[2])
+	else:
+		fv,pv = stats.f_oneway(df_data[0],df_data[1], df_data[2], df_data[3])
+
+	rw = open(plot_path+'onewayANOVA_result.tsv',"w")
+	rw.write("F-value\tP-value\n")
+	rw.write('{:.3f}'.format(fv)+'\t'+'{:.3f}'.format(pv)+'\n')
+	rw.close()
+	###########Oneway ANNOVA with group data
+
 	file_list.append(template_plot_path+test_name+str(filecount)+".png")
 	filecount += 1
 	#####Lollipop
 	current_task.update_state(state='PROGRESS', meta={'process_percent': 40})
 
-	#####Violin
+	#####Violin or boxplot
 	df_data_arr = [ pd.DataFrame(data=d) for d in df_data]
 	df_data_arr = pd.concat(df_data_arr, axis=1)
 	df_data_arr.columns = group_info
 
 	pt.violin_plt(df_data_arr,ylab=ylab,tit='',color_arr=plot_color, filename=plot_path+test_name+str(filecount))
+
+	###########Ranksum with group data
+	rw = open(plot_path+'ranksum_result.tsv',"w")
+	rw.write("Test group\tStatistic\tP-value\n")
+	for x in itertools.combinations(range(len(group_info)),2):
+		rv,pv = stats.ranksums(df_data[x[0]], df_data[x[1]])
+		rw.write(group_info[x[0]]+"-"+group_info[x[1]]+'\t'+'{:.3f}'.format(rv)+'\t'+'{:.3f}'.format(pv)+'\n')
+	rw.close()
+	###########Oneway ANNOVA with group data
+
 	file_list.append(template_plot_path+test_name+str(filecount)+".png")
 	filecount += 1
-	#####Violin
+	#####Violin or boxplot
 
 	current_task.update_state(state='PROGRESS', meta={'process_percent': 50})
 

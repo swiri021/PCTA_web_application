@@ -28,6 +28,8 @@ from lifelines.utils import concordance_index
 
 from multiprocessing import Process, Queue
 from pcta_updated import all_expr_df, pcta_id, mra_set
+from wand.image import Image
+from wand.color import Color
 
 import json
 import os
@@ -141,7 +143,7 @@ def main_template(request):
 
 			input_g = input_process(assoc_dat)
 
-			if len(input_g)>3000:
+			if len(input_g)>1000:
 				msg = "Too many genes, Try it less than 1000 Genes"
 				return render(request,'main/error.html',{'msg':msg})
 
@@ -156,15 +158,15 @@ def main_template(request):
 			input_g1 = input_process(corr_dat1)
 			input_g2 = input_process(corr_dat2)
 
-			if len(input_g1)>3000 and len(input_g2)>3000:
+			if len(input_g1)>1000 and len(input_g2)>1000:
 				msg = "Too many genes, Try it less than 1000 Genes at both boxes"
 				return render(request,'main/error.html',{'msg':msg})
 
-			elif len(input_g1)>3000:
+			elif len(input_g1)>1000:
 				msg = "Too many genes, Try it less than 1000 Genes at first box"
 				return render(request,'main/error.html',{'msg':msg})
 
-			elif len(input_g2)>3000:
+			elif len(input_g2)>1000:
 				msg = "Too many genes, Try it less than 1000 Genes at second box"
 				return render(request,'main/error.html',{'msg':msg})
 
@@ -203,7 +205,7 @@ def main_template(request):
 		elif request.POST['analysis_type']=='Set analysis start':
 			input_g = input_process(set_dat)
 
-			if len(input_g)>3000:
+			if len(input_g)>1000:
 				msg = "Too many genes, Try it less than 1000 Genes"
 				return render(request,'main/error.html',{'msg':msg})
 
@@ -299,11 +301,11 @@ def qna(request):
 
 def plot_color(input_option):
 	if input_option=='pcs':
-		return ['red','green','blue']
+		return ['#C95E5E','#57C757','#5377C6']
 	elif input_option=='pam50':
-		return ['cyan','yellow','black']
+		return ['#2A7E70','#BB733E','#BF404A']
 	elif input_option=='n_category':
-		return ['green','black','orange','red']
+		return ['#449933','#040301','#BB733E','#BF404A']
 
 def call_calculation(request):
 	analysis_type = request.session['analysis_type']
@@ -435,7 +437,22 @@ def association_result(request):
 	test_name = "association_test"
 
 	result = [template_plot_path+test_name+"0.png",template_plot_path+test_name+"1.png",template_plot_path+test_name+"2.png"]
-	return render(request, 'main/association_result.html', {'result':result})
+
+	table_result = []
+	surv_dataset = ['onewayANOVA_result', 'ranksum_result']
+	f1=open(plot_path+surv_dataset[0]+'.tsv')
+	dat1 = f1.read().strip().split("\n")
+	dat1 = dat1[1:]
+	dat1 = [d.split('\t') for d in dat1]
+	table_result.append(dat1)
+
+	f1=open(plot_path+surv_dataset[1]+'.tsv')
+	dat1 = f1.read().strip().split("\n")
+	dat1 = dat1[1:]
+	dat1 = [d.split('\t') for d in dat1]
+	table_result.append(dat1)
+
+	return render(request, 'main/association_result.html', {'result':result, 'table_result1':table_result[0], 'table_result2':table_result[1]})
 
 def bcr_result(request):
 	#result = request.session['bcr_result_list']
@@ -982,63 +999,80 @@ def set_calculator(input_data, group_info, group_samples, session_key, set_name=
 	df_user_s.columns = range(len(df_user_s.columns.tolist()))
 	df_user_s = df_user_s.reset_index()
 
-	gseapy.gsea(data=df_user_s, gene_sets=fixed_path_gmt, cls=class_vector, outdir=plot_path, min_size=2, max_size=1000, weighted_score_type=1, permutation_type = 'phenotype', method='signal_to_noise', ascending=False,figsize=(6.5,6), format='png', processes=6)
+	gsea_result = gseapy.gsea(data=df_user_s, gene_sets=fixed_path_gmt, cls=class_vector, outdir=plot_path, min_size=2, max_size=1000, weighted_score_type=1, permutation_type = 'phenotype', method='signal_to_noise', ascending=False,figsize=(6.5,6), format='png')
+	#ledge_genes = gsea_result.results[gsea_result.results.keys()[0]]['ledge_genes'].split(";")## leading edge subset
+	pval_es = gsea_result.results[gsea_result.results.keys()[0]]['pval'] ###GSEA p-value
 
 	#with Image(filename=plot_path+set_name+".gsea.pdf", resolution=300) as img:
 	#	with Image(width=img.width, height=img.height, background=Color("white")) as bg:
 	#		bg.composite(img,0,0)
 	#		bg.save(filename=plot_path+set_name+".gsea.png")
 
-	file_list.append(template_plot_path+set_name+".gsea.png")
-	filecount += 1
+	if pval_es<=0.05:
+
+		file_list.append(template_plot_path+set_name+".gsea.png")
+		filecount += 1
+	else:
+		file_list.append(" ")
+		gsea_mapping_rate= 'Not Applicable'
+		filecount += 1
 	#############GSEA#############
 
 	fold_change = all_expr_df[sample_list[0]].median(axis=1) - all_expr_df[sample_list[1]].median(axis=1)
-	#############MRA#############
-	mra_set_t = mra_set.T
-	mra_list = list(set(mra_set.index.tolist()))
-	mra_targets = [mra_set_t[x].values.tolist() for x in mra_list]
-	mra_targets = [map(str,x[0]) if type(x[0])==list else [str(x[0])] for x in mra_targets]
 
-	total_genes = len(list(set(mra_set.values.flatten())))
 
-	pvals = [fet_f(mra_targets[a], input_data, total_genes) for a in range(len(mra_list))]
-	pvals_list = [[mra_list[i],int(item[0]),int(item[1]),float("{0:.4f}".format(item[2])), float("{0:.4f}".format(fold_change.loc[mra_list[i]]))]for i,item in enumerate(pvals) if item[2] < 0.01 and fold_change.loc[mra_list[i]] >= 0.1 and item[0] > 10]
-	#table_arr = pvals_list #####Table data
+	if pval_es<=0.05:
+		#############MRA#############
+		mra_set_t = mra_set.T
+		mra_list = list(set(mra_set.index.tolist()))
+		mra_targets = [mra_set_t[x].values.tolist() for x in mra_list]
+		mra_targets = [map(str,x[0]) if type(x[0])==list else [str(x[0])] for x in mra_targets]
 
-	index_change = lambda x,y : [y]+x[1:]
-	#table_arr = [index_change(x,pcta_id.loc[x[0]]['Symbol']) for x in table_arr]
+		total_genes = len(list(set(mra_set.values.flatten())))
 
-	network_data = pd.DataFrame(data=pvals_list, columns=['TF', 'targets','mapped','pval','fc'])
-	network_data = network_data.set_index('TF')
-	network_data['Symbol'] = pcta_id.loc[map(str, network_data.index.tolist())]['Symbol']
+		pvals = [fet_f(mra_targets[a], input_data, total_genes) for a in range(len(mra_list))]
+		#pvals = [fet_f(mra_targets[a], ledge_genes, total_genes) for a in range(len(mra_list))] ## leading edge subset
+		pvals_list = [[mra_list[i],int(item[0]),int(item[1]),float("{0:.4f}".format(item[2])), float("{0:.4f}".format(fold_change.loc[mra_list[i]]))]for i,item in enumerate(pvals) if item[2] < 0.01 and fold_change.loc[mra_list[i]] >= 0.1 and item[0] > 10]
+		#table_arr = pvals_list #####Table data
 
-	network_data['prob_mapped'] = network_data['mapped']/network_data['targets']
-	network_data = network_data.sort_values('prob_mapped',ascending=False)
-	network_data = network_data.loc[network_data.index.tolist()[:10]]
-	network_data = network_data.round(4)
-	network_data['targets'].astype(int)
-	network_data['mapped'].astype(int)
+		index_change = lambda x,y : [y]+x[1:]
+		#table_arr = [index_change(x,pcta_id.loc[x[0]]['Symbol']) for x in table_arr]
 
-	selected_network_expr = df_all[group_samples[0]].loc[network_data.index.tolist()[:10]]
-	selected_network_expr['Symbol'] = pcta_id.loc[map(str, selected_network_expr.index.tolist())]['Symbol']
+		network_data = pd.DataFrame(data=pvals_list, columns=['TF', 'targets','mapped','pval','fc'])
+		network_data = network_data.set_index('TF')
+		network_data['Symbol'] = pcta_id.loc[map(str, network_data.index.tolist())]['Symbol']
 
-	network_data = network_data.set_index('Symbol')
-	selected_network_expr = selected_network_expr.set_index('Symbol')
+		network_data['prob_mapped'] = network_data['mapped']/network_data['targets']
+		network_data = network_data.sort_values('prob_mapped',ascending=False)
+		network_data = network_data.loc[network_data.index.tolist()[:10]]
+		network_data = network_data.round(4)
+		network_data['targets'].astype(int)
+		network_data['mapped'].astype(int)
 
-	pt.network_plot(network_data, selected_network_expr, tit=group_info[0],filename=plot_path+test_name+str(filecount))
-	file_list.append(template_plot_path+test_name+str(filecount)+".png")
+		selected_network_expr = df_all[group_samples[0]].loc[network_data.index.tolist()[:10]]
+		selected_network_expr['Symbol'] = pcta_id.loc[map(str, selected_network_expr.index.tolist())]['Symbol']
 
-	network_data = network_data[['targets', 'mapped', 'prob_mapped', 'fc', 'pval']]
+		network_data = network_data.set_index('Symbol')
+		selected_network_expr = selected_network_expr.set_index('Symbol')
 
-	int_ = lambda x : [int(x[0]), int(x[1])] + x[2:]
-	table_arr = [[i]+int_(network_data.loc[i].tolist()) for i in network_data.index.tolist()]
+		pt.network_plot(network_data, selected_network_expr, tit=group_info[0],filename=plot_path+test_name+str(filecount))
+		file_list.append(template_plot_path+test_name+str(filecount)+".png")
 
-	network_data.to_csv(plot_path+'mra_candidates.csv')
+		network_data = network_data[['targets', 'mapped', 'prob_mapped', 'fc', 'pval']]
 
-	os.system("cp -rf %s/* %s"%(plot_path,nginx_plot_path))
+		int_ = lambda x : [int(x[0]), int(x[1])] + x[2:]
+		table_arr = [[i]+int_(network_data.loc[i].tolist()) for i in network_data.index.tolist()]
 
-	#############MRA#############
+		network_data.to_csv(plot_path+'mra_candidates.csv')
+
+		os.system("cp -rf %s/* %s"%(plot_path,nginx_plot_path))
+
+		#############MRA#############
+
+	else:
+		table_arr=[]
+		file_list.append(" ")
+
 	return file_list, table_arr, gsea_mapping_rate
 
 ###############Calculation Section###############

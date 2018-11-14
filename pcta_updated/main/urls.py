@@ -1,6 +1,10 @@
 from django.conf.urls import url
 from . import views
 
+from django.contrib.staticfiles.storage import staticfiles_storage
+from django.views.generic.base import RedirectView
+
+
 urlpatterns = [
 	url(r'^$', views.main_template, name='main_template'),
 	url(r'^option/$', views.option, name='option'),
@@ -16,5 +20,7 @@ urlpatterns = [
 	url(r'^bcr_result/$', views.bcr_result, name='bcr_result'),
 	url(r'^set_result/$', views.set_result, name='set_result'),
 	url(r'^calculation/poll_state$', views.poll_state,name='poll_state'),
-	url(r'^pathway_input$', views.initial_change, name='pathway_input')
+	url(r'^pathway_input$', views.initial_change, name='pathway_input'),
+
+	url(r'^favicon.ico$', RedirectView.as_view( url=staticfiles_storage.url('images/favicon.ico'),), name="favicon"),
 ]

@@ -10,7 +10,7 @@ class AssocInputText(forms.Form):
 		value1 = self.cleaned_data['gene_input']
 		value1_length = value1.split("\n")
 
-		if len(value1_length) > 3000 and value1!='':
+		if len(value1_length) > 1000 and value1!='':
 			raise forms.ValidationError("Input should be less than 1000")
 		return value1
 
@@ -23,9 +23,9 @@ class CorrInputText(forms.Form):
 		value2 = self.cleaned_data['corr_input2']
 		value2_length = value2.split("\n")
 
-		if len(value1_length) > 3000 and value1!='':
+		if len(value1_length) > 1000 and value1!='':
 			raise forms.ValidationError("Input should be less than 1000")
-		if len(value2_length) > 3000 and value2!='':
+		if len(value2_length) > 1000 and value2!='':
 			raise forms.ValidationError("Input should be less than 1000")
 
 		if value1!='' and value2=='':
@@ -41,7 +41,7 @@ class SetInputText(forms.Form):
 		value1 = self.cleaned_data['set_input']
 		value1_length = value1.split("\n")
 
-		if len(value1_length) > 3000 and value1!='':
+		if len(value1_length) > 1000 and value1!='':
 			raise forms.ValidationError("Input should be less than 1000")
 		if len(value1_length) < 3 and value1!='':
 			raise forms.ValidationError("Input should be more than 3")
