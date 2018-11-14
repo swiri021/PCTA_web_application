@@ -2,10 +2,9 @@
 {% load staticfiles %}
 
 {% block content %}
-    <div align="left" style="margin-left: 5%; margin-right: 5%; margin-bottom: 5%">
+    <div align="left" style="margin-left: 5%; margin-right: 5%; margin-bottom: 2%">
     <h2 align="left">Download</h2>
     </div>
-
     <fieldset style="margin-left: 15%;margin-right: 20%;margin-top: 100px">
         <legend for="filedown1"><b>File Download</b></legend>
             <form method="POST" name="filedown1" action="{% url 'main:file_download' %}">
@@ -28,6 +27,13 @@
                 <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline" value="Download"/>
                 <input type="hidden" name="file_list" value="pcta_PCS_Gleason_data.csv" />
             </form>
+            <form method="POST" name="filedown1" action="{% url 'main:file_download' %}" style="margin-top: 10px">
+                {% csrf_token %}
+                <p style="display: inline">PCTA MySQL dump(SQL, 779.7MB)</p>
+                <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline" value="Download"/>
+                <input type="hidden" name="file_list" value="pcta_20180222.sql" />
+            </form>
+            <p> Source Code (From Github)<a type="button" class="ui-button ui-widget ui-corner-all" href="https://github.com/swiri021/PCTA_web_application/archive/master.zip">Download</a></p>
     </fieldset>
 
 {% endblock content %}

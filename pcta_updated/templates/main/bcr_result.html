@@ -2,7 +2,7 @@
 {% load staticfiles %}
 
 {% block content %}
-    <h1>Biochemical Recurrence Free-Time Analysis</h1>
+    <h2>Biochemical Recurrence Free-Time Analysis</h2>
 
     <form method="POST" name="filedown" action="{% url 'main:image_download' %}" style="display: inline">
         {% csrf_token %}
@@ -29,6 +29,7 @@
         <table id="coxresult1" class="display" cellspacing="0" width="100%">
             <thead>
                 <tr>
+                    <th name="vt">Variable type</th>
                     <th>Variable</th>
                     <th>Coefficient</th>
                     <th>Hazard Ratio(95%CI)</th>
@@ -61,6 +62,7 @@
         <table id="coxresult2" class="display" cellspacing="0" width="100%" >
             <thead>
                 <tr>
+                    <th name="vt">Variable type</th>
                     <th>Variable</th>
                     <th>Coefficient</th>
                     <th>Hazard Ratio(95%CI)</th>

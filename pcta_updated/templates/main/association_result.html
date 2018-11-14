@@ -2,33 +2,71 @@
 {% load staticfiles %}
 
 {% block content %}
-    <h1>Association Analysis</h1>
-
+    <h2>Association Analysis</h2>
+    <!--
     <form method="POST" name="filedown" action="{% url 'main:image_download' %}">
         {% csrf_token %}
         <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: block; margin-bottom: 20px" value="Image Download"/>
         <input type="hidden" name="filetype" value="association" />
     </form>
+    -->
+
+    <form method="POST" name="filedown" action="{% url 'main:image_download' %}" style="display: inline">
+        {% csrf_token %}
+        <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline-block; margin-bottom: 20px" value="Image Download"/>
+        <input type="hidden" name="filetype" value="association" />
+    </form>
+
+    <form method="POST" name="filedown" action="{% url 'main:image_download' %}" style="display: inline">
+        {% csrf_token %}
+        <input type="submit" class="ui-button ui-widget ui-corner-all" style="display: inline-block; margin-bottom: 20px" value="Table download"/>
+        <input type="hidden" name="filetype" value=".tsv" />
+    </form>
 
     <div style="display: block; width: 80%; height: 50%; margin-top: 10px">
         <fieldset>
         <legend for="lolli" ><b>Lollipop Plot</b></legend>
+            <p><b>One-way ANOVA test between subsets: F-value = {{ table_result1.0.0 }}, P-value = {{ table_result1.0.1 }}</b></p>
         <img name="lolli" src="{% static result.0 %}" style="width: 100%"/>
+
         </fieldset>
     </div>
 
-    <div style="display: inline-block; width: 40%; height: 50%; ">
+    <div class="row" style="width:80%; height: 50%; ">
+    <div class="col">
         <fieldset>
-        <legend for="violin" ><b>Violin Plot</b></legend>
+        <legend for="violin" ><b>Box Plot</b></legend>
         <img name="violin"src="{% static result.1 %}" style="width: 100%"/>
+
+            <h4>Ranksums test between subsets</h4>
+        <table id="assoresult2" class="display" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Test groups</th>
+                    <th>Statistics</th>
+                    <th>p-value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for td2 in table_result2 %}
+                <tr>
+                    {% for d in td2 %}
+                        <td>{{ d }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         </fieldset>
     </div>
 
-    <div style="display: inline-block; width: 40%; height: 50%; margin-bottom: 10px">
+    <div class="col">
         <fieldset>
         <legend for="histo"><b>Histogram Plot</b></legend>
         <img name="histo" src="{% static result.2 %}" style="width: 100%"/>
+
         </fieldset>
+    </div>
     </div>
 
 {% endblock content %}
