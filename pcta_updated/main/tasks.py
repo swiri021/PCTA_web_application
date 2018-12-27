@@ -10,7 +10,7 @@ from lifelines import CoxPHFitter
 from lifelines.utils import concordance_index
 
 from multiprocessing import Process, Queue
-from pcta_updated import all_expr_df, pcta_id, mra_set
+from pcta_updated import all_expr_df, pcta_id, mra_set, tcga_expr_df
 
 import json
 import os
@@ -22,6 +22,28 @@ from time import sleep
 from celery import Celery
 import itertools
 
+def float_format_change(fv):
+	if fv < 0.001:
+		new_fv = '<0.001'
+	else:
+		new_fv = str('{:.3f}'.format(fv))
+	return new_fv
+
+def test_and_others_selection(test_name, group_info, group_data, others_name=[]):
+	if others_name==[]:
+		others_index = [ i for i,item in enumerate(group_info) if item!=test_name]
+		others_values = [ group_data[i] for i in others_index ]
+		others_values = list(sum(others_values, []))
+		test_values = group_data[group_info.index(test_name)]
+
+		return test_values, others_values
+	else:
+		others_index = [ i for i,item in enumerate(group_info) if item in others_name]
+		others_values = [ group_data[i] for i in others_index ]
+		others_values = list(sum(others_values, []))
+		test_values = group_data[group_info.index(test_name)]
+
+		return test_values, others_values
 
 def gene_set_zscore_single_thr( arr1, gene_set=[] ,sample_status="multiple"):
 
@@ -45,7 +67,13 @@ def gene_set_zscore_single_thr( arr1, gene_set=[] ,sample_status="multiple"):
 		zscore = [cal_z(arr1, inter)]
 
 	elif sample_status=="multiple":
-		zscore = [cal_z(arr1[x], inter) for x in arr1.columns.tolist()]
+		diff_mean = arr1.loc[inter].mean(axis=0).subtract(arr1.mean(axis=0))
+		len_norm = arr1.std(ddof=1, axis=0).apply(lambda x: np.sqrt(len(inter))/x)
+		zscore = diff_mean*len_norm
+		zscore = zscore.to_frame()
+		zscore.columns = ['Zscore']
+		#zscore = [cal_z(arr1[x], inter) for x in arr1.columns.tolist()]
+		zscore = zscore['Zscore'].values.tolist()
 
 	return zscore
 
@@ -65,6 +93,10 @@ def table_split(cph):
 				pval = format(cph_d['p'].loc[x],".3f")
 				concor = format(concordance_index(cph.durations, -cph.predict_partial_hazard(cph.data).values.ravel(), cph.event_observed),".2f")
 
+				if str(pval)=='0.000':
+					pval = '<0.001'
+				else:
+					pval = str(pval)
 				t_arr.append(["Multivariate",testing, coef, haz_c+"("+haz_c_int+")", pval, concor])
 
 			return t_arr
@@ -77,11 +109,16 @@ def table_split(cph):
 				pval = format(cph_d['p'].loc[x],".3f")
 				concor = format(concordance_index(cph.durations, -cph.predict_partial_hazard(cph.data).values.ravel(), cph.event_observed),".2f")
 
+				if str(pval)=='0.000':
+					pval = '<0.001'
+				else:
+					pval = str(pval)
+					
 			return [["Univariate", testing, coef, haz_c+"("+haz_c_int+")", pval, concor]]
 
 
 @shared_task
-def association_c(input_data, group_info, group_samples, plot_color, session_key):
+def association_c(input_data, dataset_input_data, group_info, group_samples, plot_color, session_key):
 	current_task.update_state(state='PROGRESS', meta={'process_percent': 0})
 
 	plot_path= "/home/ubuntu/django_proj/pcta_updated/main/static/images/"+session_key+"/"
@@ -106,8 +143,13 @@ def association_c(input_data, group_info, group_samples, plot_color, session_key
 
 	#####Lollipop
 	pt=MY_PLOT()
-	df = all_expr_df
-	df = df.drop('Symbol',axis=1)
+
+	if dataset_input_data=='PCTA':
+		df = all_expr_df
+		df = df.drop('Symbol',axis=1)
+	else:
+		df = tcga_expr_df
+
 	current_task.update_state(state='PROGRESS', meta={'process_percent': 10})
 
 	if len(input_data)>1:
@@ -129,14 +171,14 @@ def association_c(input_data, group_info, group_samples, plot_color, session_key
 
 	rw = open(plot_path+'onewayANOVA_result.tsv',"w")
 	rw.write("F-value\tP-value\n")
-	rw.write('{:.3f}'.format(fv)+'\t'+'{:.3f}'.format(pv)+'\n')
+	rw.write(str('{:.3f}'.format(fv))+'\t'+float_format_change(pv)+'\n')
 	rw.close()
 	###########Oneway ANNOVA with group data
 
 	file_list.append(template_plot_path+test_name+str(filecount)+".png")
 	filecount += 1
 	#####Lollipop
-	current_task.update_state(state='PROGRESS', meta={'process_percent': 40})
+	current_task.update_state(state='PROGRESS', meta={'process_percent': 30})
 
 	#####Violin or boxplot
 	df_data_arr = [ pd.DataFrame(data=d) for d in df_data]
@@ -147,12 +189,55 @@ def association_c(input_data, group_info, group_samples, plot_color, session_key
 
 	###########Ranksum with group data
 	rw = open(plot_path+'ranksum_result.tsv',"w")
-	rw.write("Test group\tStatistic\tP-value\n")
-	for x in itertools.combinations(range(len(group_info)),2):
-		rv,pv = stats.ranksums(df_data[x[0]], df_data[x[1]])
-		rw.write(group_info[x[0]]+"-"+group_info[x[1]]+'\t'+'{:.3f}'.format(rv)+'\t'+'{:.3f}'.format(pv)+'\n')
-	rw.close()
-	###########Oneway ANNOVA with group data
+	rw.write("Test group\tFoldChange\tP-value\n")
+
+	if 'GS=7' in group_info:
+		#others_index = [ i for i,item in enumerate(group_info) if item!='mCRPC' ]
+		#others_values = [ df_data[i] for i in others_index ]
+		#others_values = list(sum(others_values, []))
+		#test_values = df_data[group_info.index('mCRPC')]
+		if dataset_input_data=='PCTA':
+			test_values, others_values = test_and_others_selection('mCRPC', group_info, df_data, others_name=['GS=7','GS<7','GS>7'])
+			rv,pv = stats.ranksums(test_values, others_values)
+			fc = float(np.mean(test_values)) - float(np.mean(others_values))
+			rw.write("mCRPC VS Primary"+'\t'+str('{:.3f}'.format(fc))+'\t'+float_format_change(pv)+'\n')
+
+			test_values, others_values = test_and_others_selection('Benign', group_info, df_data, others_name=['GS=7','GS<7','GS>7'])
+			rv,pv = stats.ranksums(test_values, others_values)
+			fc = float(np.mean(others_values)) - float(np.mean(test_values))
+			rw.write("Primary VS Benign"+'\t'+str('{:.3f}'.format(fc))+'\t'+float_format_change(pv)+'\n')
+			rw.close()
+
+		else:
+			test_values, others_values = test_and_others_selection('GS>7', group_info, df_data, others_name=['GS=7','GS<7'])
+			rv,pv = stats.ranksums(test_values, others_values)
+			fc = float(np.mean(test_values)) - float(np.mean(others_values))
+			rw.write("GS>7 VS Others"+'\t'+str('{:.3f}'.format(fc))+'\t'+float_format_change(pv)+'\n')
+
+			test_values, others_values = test_and_others_selection('GS<7', group_info, df_data, others_name=['GS=7','GS>7'])
+			rv,pv = stats.ranksums(test_values, others_values)
+			fc = float(np.mean(others_values)) - float(np.mean(test_values))
+			rw.write("GS<7  VS Others"+'\t'+str('{:.3f}'.format(fc))+'\t'+float_format_change(pv)+'\n')
+			rw.close()
+
+		#ranksum_test_case = [df_data[group_info.index('mCRPC')], ]
+	elif 'PCS1' in group_info:
+		test_values, others_values = test_and_others_selection('PCS1', group_info, df_data)
+		rv,pv = stats.ranksums(test_values, others_values)
+		fc = float(np.mean(test_values)) - float(np.mean(others_values))
+		rw.write("PCS1 VS Others"+'\t'+str('{:.3f}'.format(fc))+'\t'+float_format_change(pv)+'\n')
+		rw.close()
+
+	elif 'LumB' in group_info:
+		test_values, others_values = test_and_others_selection('LumB', group_info, df_data)
+		rv,pv = stats.ranksums(test_values, others_values)
+		fc = float(np.mean(test_values)) - float(np.mean(others_values))
+		rw.write("LumB VS Others"+'\t'+str('{:.3f}'.format(fc))+'\t'+float_format_change(pv)+'\n')
+		rw.close()
+
+
+	current_task.update_state(state='PROGRESS', meta={'process_percent': 40})
+	###########Ranksum with group data
 
 	file_list.append(template_plot_path+test_name+str(filecount)+".png")
 	filecount += 1
@@ -161,7 +246,8 @@ def association_c(input_data, group_info, group_samples, plot_color, session_key
 	current_task.update_state(state='PROGRESS', meta={'process_percent': 50})
 
 	#####Histogram
-	pt.histogram_group(df_data_arr,legend=True,colo=plot_color,filename=plot_path+test_name+str(filecount))
+	#pt.histogram_group(df_data_arr,legend=True,colo=plot_color,filename=plot_path+test_name+str(filecount))
+	pt.line_trend(df_data_arr,ylab='Mean of '+ylab,legend=True,colo=plot_color,filename=plot_path+test_name+str(filecount))
 	file_list.append(template_plot_path+test_name+str(filecount)+".png")
 	filecount += 1
 
@@ -197,16 +283,21 @@ def survival_c(input_data, session_key):
 
 	pt=MY_PLOT()
 
-	surv_dataset = ['GSE40272', 'GSE70769']
+	surv_dataset = ['TCGA_PRAD', 'GSE40272', 'GSE70769']
 	expr_set_arr = []
 	clinical_set_arr = []
 
 
 	for surv in  surv_dataset:
-		expr_set = pd.read_csv('user_data/clinical_data/'+surv+'.csv',index_col=0)
-		expr_set.index = expr_set.index.astype(int)
-		expr_set.index = expr_set.index.astype(str)
-		clinical_set = pd.read_excel('user_data/clinical_data/'+surv+'_clinical.xlsx',index_col=0)
+		if surv!='TCGA_PRAD':
+			expr_set = pd.read_csv('user_data/clinical_data/'+surv+'.csv',index_col=0)
+			expr_set.index = expr_set.index.astype(int)
+			expr_set.index = expr_set.index.astype(str)
+			clinical_set = pd.read_excel('user_data/clinical_data/'+surv+'_clinical.xlsx',index_col=0)
+
+		else:
+			expr_set = tcga_expr_df
+			clinical_set = pd.read_excel('user_data/clinical_data/'+surv+'_clinical.xlsx',index_col=0)
 
 		expr_set_arr.append(expr_set)
 		clinical_set_arr.append(clinical_set)
@@ -284,7 +375,7 @@ def survival_c(input_data, session_key):
 	return random.random()
 
 @shared_task
-def correlation_c(input_data1,input_data2, group_info, group_samples, plot_color, session_key, name1='Input 1', name2='Input 2'):
+def correlation_c(input_data1,input_data2, dataset_input_data, group_info, group_samples, plot_color, session_key, name1='Input 1', name2='Input 2'):
 
 	current_task.update_state(state='PROGRESS', meta={'process_percent2': 0})
 	####ALL SAMPLES INSERTION####
@@ -324,8 +415,12 @@ def correlation_c(input_data1,input_data2, group_info, group_samples, plot_color
 
 	#####Scatter
 	pt=MY_PLOT()
-	df = all_expr_df
-	df = df.drop('Symbol',axis=1)
+
+	if dataset_input_data=='PCTA':
+		df = all_expr_df
+		df = df.drop('Symbol',axis=1)
+	else:
+		df = tcga_expr_df
 
 	df_data1 = input_data_process(df, input_data1)
 	current_task.update_state(state='PROGRESS', meta={'process_percent2': 40})
